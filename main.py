@@ -6,11 +6,11 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from random import randint
 
 place_type = ["музеи", "достопримечательности", "галереи"]
-keyboard_req_types = ["type", ]
+keyboard_req_types = ["type", "city"]
 
 
 def get_response(req):
-    api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+    api_key = ""
     response = None
     search_api_server = "http://search-maps.yandex.ru/v1/"
     search_params ={
@@ -32,8 +32,9 @@ def get_response(req):
             organization = response["features"][i]
             org_name.append(organization["properties"]["CompanyMetaData"]["name"])
         return org_name
-    except Exception:
-        print('Error')
+    except Exception as exc:
+        print('Error', exc)
+
 
 def vk_keyboard(req):
     global place_type
@@ -49,13 +50,47 @@ def vk_keyboard(req):
     return keyboard.get_keyboard()
 
 
-def send_message(vk, user_id, text=None):
+def create_empty_keyboard():
+    keyboard = vk_api.keyboard.VkKeyboard.get_empty_keyboard()
+    return keyboard
+
+
+def send_message(vk, user_id, text=None, keyboard=create_empty_keyboard()):
     vk.messages.send(
         user_id=user_id,
         message=text,
-        random_id=randint(0, 2 ** 64)
+        random_id=randint(0, 2 ** 64),
+        keyboard=keyboard
     )
 
+
+def add_users_data(id, status):
+    with open('users.txt', 'a') as f:
+        f.write('{} {}\n'.format(id, status))
+
+
+def check_user():
+    users_dict = {}
+    with open('users.txt', 'r') as f:
+        users = f.readlines()
+    for i in range(len(users)):
+        users[i] = users[i].split()
+    for i in users:
+        users_dict[i[0]] = i[1]
+    return users_dict
+
+
+def change_status(id, status):
+    users = check_user()
+    for i in users:
+        if i == id:
+            users[i] = status
+    with open("users.txt", "w") as f:
+        for i in users:
+            f.write('{} {}\n'. format(i, users[i]))
+
+
+print(check_user())
 
 
 def main():
@@ -67,15 +102,57 @@ def main():
         if event.type == VkEventType.MESSAGE_NEW and event.to_me and event.text:
             print('id{}: "{}"'.format(event.user_id, event.text))
             ask = event.text.lower().split()
-            if "start" in ask:
+            keyboard = vk_keyboard("type")
+            empty_keyboard = create_empty_keyboard()
+            users = check_user()
+            if "привет" in ask:
                 try:
-                    text = 'Привет, ты хочешь узнать о достопримечательностях, музеях, галереях в городе? Напиши название твоего города и я посмотрю, куда ты сможешь сходить!'
-                    send_message(vk, event.user_id, text)
+                    send_message(vk, event.user_id, "Привет!", keyboard)
+                    if event.user_id not in check_user():
+                        add_users_data(event.user_id, "type")
+                    if event.user_id in check_user():
+                        change_status(event.user_id, "type")
                 except Exception as exc:
-                    print('Ошибка', exc)
-
-
-
+                    print("Ошибка: ", exc)
+            elif "достопримечательности" in ask:
+                try:
+                    send_message(vk, event.user_id, "Напиши название города, достопримечательности которого ты бы хотел посмотреть.")
+                    if event.user_id not in check_user():
+                        add_users_data(event.user_id, "достопримечательности")
+                    if event.user_id in check_user():
+                        change_status(event.user_id, "достопримечательности")
+                except Exception as exc:
+                    print("Ошибка: ", exc)
+            elif "музеи" in ask:
+                try:
+                    send_message(vk, event.user_id, "Напиши название города, музеи которого ты бы хотел посмотреть.")
+                    if event.user_id not in check_user():
+                        add_users_data(event.user_id, "музеи")
+                    if event.user_id in check_user():
+                        change_status(event.user_id, "музеи")
+                except Exception as exc:
+                    print("Ошибка: ", exc)
+            elif "галереи" in ask:
+                try:
+                    send_message(vk, event.user_id, "Напиши название города, галереи которого ты бы хотел посмотреть.")
+                    if event.user_id not in check_user():
+                        add_users_data(event.user_id, "галереи")
+                    if event.user_id in check_user():
+                        change_status(event.user_id, "галереи")
+                except Exception as exc:
+                    print("Ошибка: ", exc)
+            elif (str(event.user_id) in users) and (users[str(event.user_id)] == "достопримечательности" or "музеи" or "галереи"):
+                orgs = get_response(users[str(event.user_id)] + ask[0])
+                print(orgs)
+                text = ''
+                for i in range(len(orgs)):
+                    text += '{}. {}\n'.format(i + 1, orgs[i])
+                try:
+                    send_message(vk, event.user_id, text, keyboard)
+                    if event.user_id in check_user():
+                        change_status(event.user_id, "type")
+                except Exception as exc:
+                    print("Ошибка: ", exc)
 
 
 if __name__ == '__main__':

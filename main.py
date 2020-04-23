@@ -3,6 +3,7 @@ import json
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
+import wikipedia
 from random import randint
 
 place_type = ["музеи", "достопримечательности", "галереи"]
@@ -10,7 +11,7 @@ keyboard_req_types = ["type", "city"]
 
 
 def get_response(req):
-    api_key = ""
+    api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
     response = None
     search_api_server = "http://search-maps.yandex.ru/v1/"
     search_params ={
@@ -91,10 +92,12 @@ def change_status(id, status):
 
 
 print(check_user())
+change_status("228322", "gay")
+print(check_user())
 
 
 def main():
-    token = ''
+    token = 'fb848191c43352433e5f470f5f5324f3c4bdc761728f8eff388eca7d4cdb4d6164c6cb75b37db1d623738'
     vk_session = vk_api.VkApi(token=token)
     vk = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
@@ -147,12 +150,21 @@ def main():
                 text = ''
                 for i in range(len(orgs)):
                     text += '{}. {}\n'.format(i + 1, orgs[i])
+                text += "Напиши цифру от 1 до 10 и я расскажу больше об этом месте"
                 try:
-                    send_message(vk, event.user_id, text, keyboard)
+                    send_message(vk, event.user_id, text, empty_keyboard)
                     if event.user_id in check_user():
-                        change_status(event.user_id, "type")
+                        change_status(event.user_id, "more")
+                        check_user()
                 except Exception as exc:
                     print("Ошибка: ", exc)
+            elif (str(event.user_id) in users) and (users[str(event.user_id)] == "more"):
+                try:
+                    if ask[0].isdigit():
+                        send_message(vk, event.user_id, wikipedia.summary(orgs[int(ask[0]) + 1]), keyboard)
+                except Exception as exc:
+                    print("Ошибка: ", exc)
+
 
 
 if __name__ == '__main__':

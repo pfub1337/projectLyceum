@@ -5,6 +5,7 @@ from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 import wikipedia
 from random import randint
+import sqlite3
 
 place_type = ["музеи", "достопримечательности", "галереи"]
 keyboard_req_types = ["type", "city"]
@@ -37,16 +38,18 @@ def get_response(req):
         print('Error', exc)
 
 
-def vk_keyboard(req):
+def vk_keyboard(req, req_list=[]):
     global place_type
     keyboard = VkKeyboard(one_time=True)
     if req == 'type':
         for i in place_type:
             keyboard.add_button(i, color=VkKeyboardColor.POSITIVE)
     elif req == 'more':
-        for i in req:
+        for i in range(len(req_list) // 2):
+            print(req_list[i], req_list[i + 1])
+            keyboard.add_button(req_list[i], color=VkKeyboardColor.POSITIVE)
+            keyboard.add_button(req_list[i + 1], color=VkKeyboardColor.POSITIVE)
             keyboard.add_line()
-            keyboard.add_button(i, color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
     return keyboard.get_keyboard()
 
@@ -66,34 +69,30 @@ def send_message(vk, user_id, text=None, keyboard=create_empty_keyboard()):
 
 
 def add_users_data(id, status):
-    with open('users.txt', 'a') as f:
-        f.write('{} {}\n'.format(id, status))
+    con = sqlite3.connect("users.db")
+    cur = con.cursor()
+    cur.execute("INSERT INTO Users VALUES(?, ?)", (id, status))
+    con.commit()
+    con.close()
 
 
 def check_user():
-    users_dict = {}
-    with open('users.txt', 'r') as f:
-        users = f.readlines()
-    for i in range(len(users)):
-        users[i] = users[i].split()
-    for i in users:
-        users_dict[i[0]] = i[1]
-    return users_dict
+    con = sqlite3.connect("users.db")
+    cur = con.cursor()
+    result = cur.execute("SELECT * FROM Users")
+    result = [x for x in result]
+    result_id = [result[x][0] for x in range(len(result))]
+    result_stat = [result[x][1] for x in range(len(result))]
+    con.close()
+    return [result_id, result_stat]
 
 
 def change_status(id, status):
-    users = check_user()
-    for i in users:
-        if i == id:
-            users[i] = status
-    with open("users.txt", "w") as f:
-        for i in users:
-            f.write('{} {}\n'. format(i, users[i]))
-
-
-print(check_user())
-change_status("228322", "gay")
-print(check_user())
+    con = sqlite3.connect("users.db")
+    cur = con.cursor()
+    cur.execute("UPDATE Users SET status = ? WHERE id = ?", (status, id))
+    con.commit()
+    con.close()
 
 
 def main():
@@ -108,62 +107,75 @@ def main():
             keyboard = vk_keyboard("type")
             empty_keyboard = create_empty_keyboard()
             users = check_user()
+            users_id = users[0]
+            users_status = users[1]
             if "привет" in ask:
                 try:
                     send_message(vk, event.user_id, "Привет!", keyboard)
-                    if event.user_id not in check_user():
-                        add_users_data(event.user_id, "type")
-                    if event.user_id in check_user():
-                        change_status(event.user_id, "type")
+                    if event.user_id in users_id:
+                        change_status(int(event.user_id), "type")
+                    else:
+                        add_users_data(int(event.user_id), "type")
                 except Exception as exc:
                     print("Ошибка: ", exc)
             elif "достопримечательности" in ask:
                 try:
                     send_message(vk, event.user_id, "Напиши название города, достопримечательности которого ты бы хотел посмотреть.")
-                    if event.user_id not in check_user():
-                        add_users_data(event.user_id, "достопримечательности")
-                    if event.user_id in check_user():
-                        change_status(event.user_id, "достопримечательности")
+                    if event.user_id in users_id:
+                        change_status(int(event.user_id), "достопримечательности")
+                    else:
+                        add_users_data(int(event.user_id), "достопримечательности")
                 except Exception as exc:
                     print("Ошибка: ", exc)
             elif "музеи" in ask:
                 try:
                     send_message(vk, event.user_id, "Напиши название города, музеи которого ты бы хотел посмотреть.")
-                    if event.user_id not in check_user():
-                        add_users_data(event.user_id, "музеи")
-                    if event.user_id in check_user():
-                        change_status(event.user_id, "музеи")
+                    if event.user_id in users_id:
+                        change_status(int(event.user_id), "музеи")
+                    else:
+                        add_users_data(int(event.user_id), "музеи")
                 except Exception as exc:
                     print("Ошибка: ", exc)
             elif "галереи" in ask:
                 try:
                     send_message(vk, event.user_id, "Напиши название города, галереи которого ты бы хотел посмотреть.")
-                    if event.user_id not in check_user():
-                        add_users_data(event.user_id, "галереи")
-                    if event.user_id in check_user():
-                        change_status(event.user_id, "галереи")
+                    if event.user_id in users_id:
+                        change_status(int(event.user_id), "галереи")
+                    else:
+                        add_users_data(int(event.user_id), "галереи")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif (str(event.user_id) in users) and (users[str(event.user_id)] == "достопримечательности" or "музеи" or "галереи"):
-                orgs = get_response(users[str(event.user_id)] + ask[0])
+            elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or "музеи" or "галереи"):
+                orgs = get_response(users_status[users_id.index(int(event.user_id))] + ask[0])
+                orgs = [str(x) for x in orgs]
                 print(orgs)
                 text = ''
                 for i in range(len(orgs)):
                     text += '{}. {}\n'.format(i + 1, orgs[i])
-                text += "Напиши цифру от 1 до 10 и я расскажу больше об этом месте"
+                text += "Напиши цифру от 1 до 10 или нажми кнопку на клавиатуре и я расскажу больше об этом месте"
                 try:
-                    send_message(vk, event.user_id, text, empty_keyboard)
-                    if event.user_id in check_user():
+                    change_status(event.user_id, "more")
+                    keyboard = vk_keyboard("more", orgs)
+                    send_message(vk, event.user_id, text, keyboard)
+                    if event.user_id in users_id:
                         change_status(event.user_id, "more")
-                        check_user()
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif (str(event.user_id) in users) and (users[str(event.user_id)] == "more"):
-                try:
-                    if ask[0].isdigit():
+            elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
+                print(ask)
+                if ask[0].isdigit():
+                    try:
                         send_message(vk, event.user_id, wikipedia.summary(orgs[int(ask[0]) + 1]), keyboard)
-                except Exception as exc:
-                    print("Ошибка: ", exc)
+                    except Exception as exc:
+                        print("Ошибка: ", exc)
+                else:
+                    try:
+                        req = str()
+                        for i in ask:
+                            req += i
+                        send_message(vk, event.user_id, wikipedia.summary(req), keyboard)
+                    except Exception as exc:
+                        print("Ошибка: ", exc)
 
 
 

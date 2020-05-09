@@ -1,5 +1,4 @@
 import requests
-import json
 import vk_api
 from vk_api.longpoll import VkLongPoll, VkEventType
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
@@ -7,8 +6,8 @@ import wikipedia
 from random import randint
 import sqlite3
 
-place_type = ["музеи", "достопримечательности", "галереи"]
-keyboard_req_types = ["type", "city"]
+# place_type = ["музеи", "достопримечательности", "галереи"]
+# keyboard_req_types = ["type", "city"]
 
 
 def get_response(req):

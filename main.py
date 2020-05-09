@@ -6,8 +6,7 @@ import wikipedia
 from random import randint
 import sqlite3
 
-# place_type = ["музеи", "достопримечательности", "галереи"]
-# keyboard_req_types = ["type", "city"]
+place_type = ["музеи", "достопримечательности", "галереи"]
 
 
 def get_response(req):
@@ -54,6 +53,7 @@ def vk_keyboard(req, req_list=None):
             keyboard.add_line()
         if len(req_list) % 2 == 1:
             keyboard.add_button(req_list[-1], color=VkKeyboardColor.POSITIVE)
+            keyboard.add_line()
     keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
     return keyboard.get_keyboard()
 
@@ -114,11 +114,14 @@ def main():
             users = check_user()
             users_id = users[0]
             users_status = users[1]
-            print(users_status)
+            # требуется фикс! кнопка НЕ рабочая
             if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
-                elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or users_status[users_id.index(int(event.user_id))] == "музеи" or users_status[users_id.index(int(event.user_id))] == "галереи"):
+                elif (int(event.user_id) in users_id) and \
+                        (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or
+                         users_status[users_id.index(int(event.user_id))] == "музеи" or
+                         users_status[users_id.index(int(event.user_id))] == "галереи"):
                     change_status(int(event.user_id), "type")
                 continue
             if "привет" in ask:
@@ -133,7 +136,9 @@ def main():
             elif "достопримечательности" in ask:
                 try:
                     keyboard = vk_keyboard("other")
-                    send_message(vk, event.user_id, "Напиши название города, достопримечательности которого ты бы хотел посмотреть.", keyboard)
+                    send_message(vk, event.user_id,
+                                 "Напиши название города, достопримечательности которого ты бы хотел посмотреть.",
+                                 keyboard)
                     if event.user_id in users_id:
                         change_status(int(event.user_id), "достопримечательности")
                     else:
@@ -143,7 +148,8 @@ def main():
             elif "музеи" in ask:
                 try:
                     keyboard = vk_keyboard("other")
-                    send_message(vk, event.user_id, "Напиши название города, музеи которого ты бы хотел посмотреть.", keyboard)
+                    send_message(vk, event.user_id,
+                                 "Напиши название города, музеи которого ты бы хотел посмотреть.", keyboard)
                     if event.user_id in users_id:
                         change_status(int(event.user_id), "музеи")
                     else:
@@ -153,18 +159,20 @@ def main():
             elif "галереи" in ask:
                 try:
                     keyboard = vk_keyboard("other")
-                    send_message(vk, event.user_id, "Напиши название города, галереи которого ты бы хотел посмотреть.", keyboard)
+                    send_message(vk, event.user_id,
+                                 "Напиши название города, галереи которого ты бы хотел посмотреть.", keyboard)
                     if event.user_id in users_id:
                         change_status(int(event.user_id), "галереи")
                     else:
                         add_users_data(int(event.user_id), "галереи")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or users_status[users_id.index(int(event.user_id))] == "музеи" or users_status[users_id.index(int(event.user_id))] == "галереи"):
+            elif (int(event.user_id) in users_id) and \
+                    (users_status[users_id.index(int(event.user_id))] == "достопримечательности"
+                     or users_status[users_id.index(int(event.user_id))] == "музеи"
+                     or users_status[users_id.index(int(event.user_id))] == "галереи"):
                 city = ask[0]
                 orgs = get_response(users_status[users_id.index(int(event.user_id))] + ask[0])
-                # orgs = [str(x) for x in orgs]
-                print(orgs)
                 text = ''
                 for i in range(len(orgs)):
                     text += '{}. {}\n'.format(i + 1, orgs[i])

@@ -119,6 +119,14 @@ def main():
             if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
+                    try:
+                        send_message(vk, event.user_id, "Выбери то, что хочешь посмотреть!", keyboard)
+                        if event.user_id in users_id:
+                            change_status(int(event.user_id), "type")
+                        else:
+                            add_users_data(int(event.user_id), "type")
+                    except Exception as exc:
+                        print("Ошибка: ", exc)
 
                 elif (int(event.user_id) in users_id) and \
                         (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or

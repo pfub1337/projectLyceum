@@ -112,8 +112,6 @@ def main():
             users = check_user()
             users_id = users[0]
             users_status = users[1]
-            if "стоп" in ask:
-                main()
             if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
@@ -131,9 +129,9 @@ def main():
                     except Exception as exc:
                         print("Ошибка: ", exc)
                 continue
-            if "привет" in ask:
+            if "привет" in ask or "начать" in ask:
                 try:
-                    send_message(vk, event.user_id, "Привет!", keyboard)
+                    send_message(vk, event.user_id, "Привет!\nВыберите один из вариантов для поиска", keyboard)
                     if event.user_id in users_id:
                         change_status(int(event.user_id), "type")
                     else:
@@ -225,7 +223,6 @@ def main():
                     send_message(vk, event.user_id, "Извините, я не понял вашего запроса, повторите попытку.")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-
 
 
 if __name__ == '__main__':

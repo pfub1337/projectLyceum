@@ -102,6 +102,7 @@ def change_status(id, status):
 def main():
     token = 'fb848191c43352433e5f470f5f5324f3c4bdc761728f8eff388eca7d4cdb4d6164c6cb75b37db1d623738'
     vk_session = vk_api.VkApi(token=token)
+    typenum = 0
     vk = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
     wikipedia.set_lang("ru")
@@ -118,11 +119,21 @@ def main():
             if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
+
                 elif (int(event.user_id) in users_id) and \
                         (users_status[users_id.index(int(event.user_id))] == "достопримечательности" or
                          users_status[users_id.index(int(event.user_id))] == "музеи" or
                          users_status[users_id.index(int(event.user_id))] == "галереи"):
                     change_status(int(event.user_id), "type")
+                    print(users_status[users_id.index(int(event.user_id))])
+                    try:
+                        send_message(vk, event.user_id, "Выбери то, что хочешь посмотреть!", keyboard)
+                        if event.user_id in users_id:
+                            change_status(int(event.user_id), "type")
+                        else:
+                            add_users_data(int(event.user_id), "type")
+                    except Exception as exc:
+                        print("Ошибка: ", exc)
                 continue
             if "привет" in ask:
                 try:
@@ -133,7 +144,7 @@ def main():
                         add_users_data(int(event.user_id), "type")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif "достопримечательности" in ask:
+            elif "достопримечательности" in ask or typenum == 1:
                 try:
                     keyboard = vk_keyboard("other")
                     send_message(vk, event.user_id,
@@ -145,7 +156,7 @@ def main():
                         add_users_data(int(event.user_id), "достопримечательности")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif "музеи" in ask:
+            elif "музеи" in ask or typenum == 2:
                 try:
                     keyboard = vk_keyboard("other")
                     send_message(vk, event.user_id,
@@ -156,7 +167,7 @@ def main():
                         add_users_data(int(event.user_id), "музеи")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-            elif "галереи" in ask:
+            elif "галереи" in ask or typenum == 3:
                 try:
                     keyboard = vk_keyboard("other")
                     send_message(vk, event.user_id,

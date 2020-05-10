@@ -46,7 +46,7 @@ def vk_keyboard(req, req_list=None):
         for i in place_type:
             keyboard.add_button(i, color=VkKeyboardColor.POSITIVE)
     elif req == 'more':
-        for i in range(len(req_list) // 2):
+        for i in range(0, len(req_list), 2):
             print(req_list[i], req_list[i + 1])
             keyboard.add_button(req_list[i], color=VkKeyboardColor.POSITIVE)
             keyboard.add_button(req_list[i + 1], color=VkKeyboardColor.POSITIVE)
@@ -115,7 +115,7 @@ def main():
             users_id = users[0]
             users_status = users[1]
             # требуется фикс! кнопка НЕ рабочая
-            if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
+            if (ask[0] == "назад") and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
                 elif (int(event.user_id) in users_id) and \
@@ -123,7 +123,6 @@ def main():
                          users_status[users_id.index(int(event.user_id))] == "музеи" or
                          users_status[users_id.index(int(event.user_id))] == "галереи"):
                     change_status(int(event.user_id), "type")
-                continue
             if "привет" in ask:
                 try:
                     send_message(vk, event.user_id, "Привет!", keyboard)
@@ -172,11 +171,14 @@ def main():
                      or users_status[users_id.index(int(event.user_id))] == "музеи"
                      or users_status[users_id.index(int(event.user_id))] == "галереи"):
                 city = ask[0]
-                orgs = get_response(users_status[users_id.index(int(event.user_id))] + ask[0])
-                text = ''
-                for i in range(len(orgs)):
-                    text += '{}. {}\n'.format(i + 1, orgs[i])
-                text += "Напиши цифру от 1 до 10 или нажми кнопку на клавиатуре и я расскажу больше об этом месте"
+                try:
+                    orgs = get_response(users_status[users_id.index(int(event.user_id))] + ask[0])
+                    text = ''
+                    for i in range(len(orgs)):
+                        text += '{}. {}\n'.format(i + 1, orgs[i])
+                    text += "Напиши цифру от 1 до 10 или нажми кнопку на клавиатуре и я расскажу больше об этом месте"
+                except:
+                    text = "Извините, я не нашел ничего по вашему запросу :("
                 try:
                     change_status(event.user_id, "more")
                     try:
@@ -191,15 +193,31 @@ def main():
             elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                 if ask[0].isdigit:
                     try:
-                        send_message(vk, event.user_id, wikipedia.summary(orgs[int(ask[0]) - 1]), keyboard)
+                        try:
+                            wiki_text = wikipedia.summary(orgs[int(ask[0]) - 1])
+                            send_message(vk, event.user_id, wiki_text, keyboard)
+                        except:
+                            send_message(vk, event.user_id, "Извините, я не смог найти информацию об этом месте :(",
+                                         keyboard)
                     except Exception as exc:
                         print("Ошибка: ", exc)
                 else:
                     try:
                         print('It\'s Fine!')
-                        send_message(vk, event.user_id, wikipedia.summary(ask[0]), keyboard)
+                        try:
+                            wiki_text = wikipedia.summary(ask[0])
+                            send_message(vk, event.user_id, wiki_text, keyboard)
+                        except:
+                            send_message(vk, event.user_id, "Извините, я не смог найти информацию об этом месте :(",
+                                         keyboard)
                     except Exception as exc:
                         print("Ошибка: ", exc)
+            else:
+                try:
+                    send_message(vk, event.user_id, "Извините, я не понял вашего запроса, повторите попытку.")
+                except Exception as exc:
+                    print("Ошибка: ", exc)
+
 
 
 

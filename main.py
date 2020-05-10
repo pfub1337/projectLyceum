@@ -21,7 +21,6 @@ def get_response(req):
     }
     try:
         response = requests.get(search_api_server, params=search_params)
-        print(response)
         if not response:
             return 'error'
         response = response.json()
@@ -47,7 +46,6 @@ def vk_keyboard(req, req_list=None):
             keyboard.add_button(i, color=VkKeyboardColor.POSITIVE)
     elif req == 'more':
         for i in range(0, len(req_list), 2):
-            print(req_list[i], req_list[i + 1])
             keyboard.add_button(req_list[i], color=VkKeyboardColor.POSITIVE)
             keyboard.add_button(req_list[i + 1], color=VkKeyboardColor.POSITIVE)
             keyboard.add_line()
@@ -123,7 +121,6 @@ def main():
                          users_status[users_id.index(int(event.user_id))] == "музеи" or
                          users_status[users_id.index(int(event.user_id))] == "галереи"):
                     change_status(int(event.user_id), "type")
-                    print(users_status[users_id.index(int(event.user_id))])
                     try:
                         send_message(vk, event.user_id, "Выбери то, что хочешь посмотреть!", keyboard)
                         if event.user_id in users_id:
@@ -180,7 +177,6 @@ def main():
                     (users_status[users_id.index(int(event.user_id))] == "достопримечательности"
                      or users_status[users_id.index(int(event.user_id))] == "музеи"
                      or users_status[users_id.index(int(event.user_id))] == "галереи"):
-                city = ask[0]
                 try:
                     orgs = get_response(users_status[users_id.index(int(event.user_id))] + ask[0])
                     text = ''
@@ -201,7 +197,7 @@ def main():
                 except Exception as exc:
                     print("Ошибка: ", exc)
             elif (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
-                if ask[0].isdigit:
+                if ask[0].isdigit():
                     try:
                         try:
                             wiki_text = wikipedia.summary(orgs[int(ask[0]) - 1])
@@ -209,17 +205,18 @@ def main():
                         except:
                             send_message(vk, event.user_id, "Извините, я не смог найти информацию об этом месте :(",
                                          keyboard)
+                        change_status(event.user_id, "type")
                     except Exception as exc:
                         print("Ошибка: ", exc)
                 else:
                     try:
-                        print('It\'s Fine!')
                         try:
-                            wiki_text = wikipedia.summary(ask[0])
-                            send_message(vk, event.user_id, wiki_text, keyboard)
+                            wiki_text = " ".join(ask)
+                            send_message(vk, event.user_id, wikipedia.summary(wiki_text), keyboard)
                         except:
                             send_message(vk, event.user_id, "Извините, я не смог найти информацию об этом месте :(",
                                          keyboard)
+                        change_status(event.user_id, "type")
                     except Exception as exc:
                         print("Ошибка: ", exc)
             else:

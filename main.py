@@ -112,7 +112,8 @@ def main():
             users = check_user()
             users_id = users[0]
             users_status = users[1]
-            # требуется фикс! кнопка НЕ рабочая
+            if "стоп" in ask:
+                main()
             if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")

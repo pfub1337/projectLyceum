@@ -115,7 +115,7 @@ def main():
             users_id = users[0]
             users_status = users[1]
             # требуется фикс! кнопка НЕ рабочая
-            if (ask[0] == "назад") and (users_status[users_id.index(int(event.user_id))] != "type"):
+            if ("назад" in ask) and (users_status[users_id.index(int(event.user_id))] != "type"):
                 if (int(event.user_id) in users_id) and (users_status[users_id.index(int(event.user_id))] == "more"):
                     change_status(int(event.user_id), "type")
                 elif (int(event.user_id) in users_id) and \
@@ -123,6 +123,16 @@ def main():
                          users_status[users_id.index(int(event.user_id))] == "музеи" or
                          users_status[users_id.index(int(event.user_id))] == "галереи"):
                     change_status(int(event.user_id), "type")
+                    print(users_status[users_id.index(int(event.user_id))])
+                    try:
+                        send_message(vk, event.user_id, "Выбери то, что хочешь посмотреть!", keyboard)
+                        if event.user_id in users_id:
+                            change_status(int(event.user_id), "type")
+                        else:
+                            add_users_data(int(event.user_id), "type")
+                    except Exception as exc:
+                        print("Ошибка: ", exc)
+                continue
             if "привет" in ask:
                 try:
                     send_message(vk, event.user_id, "Привет!", keyboard)
@@ -217,7 +227,6 @@ def main():
                     send_message(vk, event.user_id, "Извините, я не понял вашего запроса, повторите попытку.")
                 except Exception as exc:
                     print("Ошибка: ", exc)
-
 
 
 

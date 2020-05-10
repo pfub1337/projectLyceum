@@ -10,7 +10,7 @@ place_type = ["музеи", "достопримечательности", "га�
 
 
 def get_response(req):
-    api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
+    api_key = "key"
     response = None
     search_api_server = "http://search-maps.yandex.ru/v1/"
     search_params ={
@@ -98,7 +98,7 @@ def change_status(id, status):
 
 
 def main():
-    token = 'fb848191c43352433e5f470f5f5324f3c4bdc761728f8eff388eca7d4cdb4d6164c6cb75b37db1d623738'
+    token = 'token'
     vk_session = vk_api.VkApi(token=token)
     vk = vk_session.get_api()
     longpoll = VkLongPoll(vk_session)
